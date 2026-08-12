@@ -1,0 +1,20 @@
+{
+  "contract": "ConditionalMarketRouter",
+  "network": "testnet-bradbury",
+  "chain_id": 4221,
+  "deployer": "0xdB433ff614bDD1ecE21Aa97221C3e0a7ecf79c92",
+  "contract_address": "0xac98350a1E304f9B80f7d3b272e222978a8665a2",
+  "deployment_transaction": "0xc8a771698bb3cb03b85eb5ee4f90e2c69505399cc9e7e02fc0c91e6b22022ce5",
+  "explorer_url": "https://explorer-bradbury.genlayer.com/address/0xac98350a1E304f9B80f7d3b272e222978a8665a2",
+  "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+  "deployment_execution_verified": true,
+  "protocol_status": "ACCEPTED",
+  "protocol_status_code": 5,
+  "batch_submitted_before_finality_check": true,
+  "batch_started_utc": "2026-08-12T17:38:05.8111878Z",
+  "batch_completed_utc": "2026-08-12T17:41:04.0808420Z",
+  "finalized_verified": false,
+  "trigger_transaction": null,
+  "outcome_transaction": null,
+  "note": "The appeal window is open. Finalization and the two-stage Bradbury consensus test remain pending."
+}

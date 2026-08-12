@@ -148,25 +148,27 @@ class ConditionalMarketRouter(gl.Contract):
         self.outcome_result_json = "{}"
         self.attempts = u256(0)
 
-    def _candidate(self, stage: str) -> dict:
+    def _consensus_candidate(self, stage: str) -> dict:
         if stage == "trigger":
-            spec = _parse_json(self.trigger_spec_json, "trigger spec")
-            urls = _parse_json(self.trigger_sources_json, "trigger sources")
+            spec = _parse_json(str(self.trigger_spec_json), "trigger spec")
+            urls = _parse_json(str(self.trigger_sources_json), "trigger sources")
         else:
-            spec = _parse_json(self.outcome_spec_json, "outcome spec")
-            urls = _parse_json(self.outcome_sources_json, "outcome sources")
-        evidence = []
-        available_count = 0
-        for index, url in enumerate(urls):
-            response = gl.nondet.web.get(url)
-            available = response.status == 200
-            if available:
-                available_count += 1
-            content = response.body[:MAX_SOURCE_CHARS].decode("utf-8", errors="replace") if available else "[SOURCE_UNAVAILABLE]"
-            evidence.append({"id": str(index), "url": url, "available": available, "content": content})
-        if available_count == 0:
-            return {"stage": stage, "decision": "UNRESOLVED"}
-        prompt = f"""
+            spec = _parse_json(str(self.outcome_spec_json), "outcome spec")
+            urls = _parse_json(str(self.outcome_sources_json), "outcome sources")
+
+        def leader_fn() -> dict:
+            evidence = []
+            available_count = 0
+            for index, url in enumerate(urls):
+                response = gl.nondet.web.get(url)
+                available = response.status == 200
+                if available:
+                    available_count += 1
+                content = response.body[:MAX_SOURCE_CHARS].decode("utf-8", errors="replace") if available else "[SOURCE_UNAVAILABLE]"
+                evidence.append({"id": str(index), "url": url, "available": available, "content": content})
+            if available_count == 0:
+                return {"stage": stage, "decision": "UNRESOLVED"}
+            prompt = f"""
 Evaluate this {stage} condition from the public evidence.
 Return ONLY JSON: {{"decision":"TRUE|FALSE|UNRESOLVED"}}
 Use UNRESOLVED when evidence is unavailable, conflicting, or insufficient.
@@ -175,13 +177,9 @@ Condition: {json.dumps(spec, sort_keys=True)}
 Evidence:
 {json.dumps(evidence, sort_keys=True)}
 """
-        result = _as_object(gl.nondet.exec_prompt(prompt, response_format="json"), f"{stage} evaluation")
-        decision = _normalize_decision(result.get("decision", "UNRESOLVED"))
-        return {"stage": stage, "decision": decision}
-
-    def _consensus_candidate(self, stage: str) -> dict:
-        def leader_fn() -> dict:
-            return self._candidate(stage)
+            result = _as_object(gl.nondet.exec_prompt(prompt, response_format="json"), f"{stage} evaluation")
+            decision = _normalize_decision(result.get("decision", "UNRESOLVED"))
+            return {"stage": stage, "decision": decision}
 
         def validator_fn(leaders_res) -> bool:
             if not isinstance(leaders_res, gl.vm.Return):

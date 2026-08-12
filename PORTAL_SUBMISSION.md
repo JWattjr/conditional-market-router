@@ -2,7 +2,7 @@
 
 **Contribution type:** Builder → Intelligent Contracts  
 **Title:** Conditional Market Router  
-**Contribution date:** Use the actual date of the submitted release.
+**Contribution date:** August 12, 2026
 
 ## Notes / Description
 
@@ -21,11 +21,11 @@ finality-aware payout wrapper but holds no funds itself.
 
 ## Evidence to add
 
-1. GitHub Repository — replace with the private repository URL.
-2. GitHub File — `contracts/ConditionalMarketRouter.py`.
-3. GitHub File — `tests/test_router.py`.
-4. GitHub File — `docs/SECURITY_AUDIT.md`.
-5. GitHub File — `docs/TEST_MATRIX.md`.
-6. GitHub File — `deployments/studionet.json`.
-7. GitHub File — `deployments/bradbury.json`.
-8. GenLayer Explorer Contract — replace with the finalized Bradbury address URL.
+1. GitHub Repository — https://github.com/JWattjr/conditional-market-router
+2. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/contracts/ConditionalMarketRouter.py
+3. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/tests/test_router.py
+4. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/docs/SECURITY_AUDIT.md
+5. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/docs/TEST_MATRIX.md
+6. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/deployments/studionet.json
+7. GitHub File — https://github.com/JWattjr/conditional-market-router/blob/main/deployments/bradbury.json
+8. GenLayer Explorer Contract — https://explorer-bradbury.genlayer.com/address/0xac98350a1E304f9B80f7d3b272e222978a8665a2
