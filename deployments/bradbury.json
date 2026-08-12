@@ -17,12 +17,12 @@
   "batch_completed_utc": "2026-08-12T17:41:04.0808420Z",
   "finalized_verified": true,
   "trigger_transaction": "0xe7b9101e602c4a32b5133fd797303125a7661389d6818a31ae0b40b2b4934703",
-  "trigger_status": "ACCEPTED",
+  "trigger_status": "FINALIZED",
   "trigger_execution": "FINISHED_WITH_RETURN",
   "trigger_consensus_result": "MAJORITY_AGREE",
   "trigger_validator_votes": {"finished_with_return": 3, "timeout": 2},
   "outcome_transaction": "0x42e1b8562215c4a9b185842b0ae2790fcddc6203af8d1c172e2870df67c6b616",
-  "outcome_status": "ACCEPTED",
+  "outcome_status": "FINALIZED",
   "outcome_execution": "FINISHED_WITH_RETURN",
   "outcome_consensus_result": "MAJORITY_AGREE",
   "outcome_validator_votes": {"finished_with_return": 5},
@@ -31,7 +31,8 @@
   "trigger_decision": "TRUE",
   "outcome": "YES",
   "attempts": 2,
-  "trigger_finalized_verified": false,
-  "outcome_finalized_verified": false,
-  "note": "Both ordered stages reached majority agreement and applied the expected state. Their appeal windows remain open."
+  "trigger_finalized_verified": true,
+  "outcome_finalized_verified": true,
+  "finality_verified_utc": "2026-08-12T19:04:34.8471993Z",
+  "note": "Deployment and both ordered consensus stages are finalized with the expected SETTLED / YES state."
 }
