@@ -1,30 +1,31 @@
 # Test matrix
 
-| Requirement | Direct test | Consensus/integration test |
+| Requirement | Direct verification | Hosted-network evidence |
 | --- | --- | --- |
-| Constructor validation | Invalid JSON, duplicate IDs, bad URL, bad deadline | Deployment rejection on invalid args |
-| Access control | Owner-only evidence/review methods | Unauthorized transaction fails |
-| Deadline enforcement | Resolve before deadline reverts | Same on a real network timestamp |
-| Happy-path decision | Mock web/LLM produces canonical result | Five-validator agreement |
-| Malicious leader | Mock leader result differs from independent result | Validator disagreement/rotation |
-| Missing source | Mock 4xx/5xx or unavailable page | Fail-closed unresolved/unavailable state |
-| Prompt injection | Evidence contains fake instructions | Result still follows frozen schema/policy |
-| Replay/idempotency | Repeat terminal resolve | Repeat finalized transaction is safe |
-| Boundary semantics | K-of-N, threshold, trigger routing, rulebook status | Same result under consensus |
-| Nondeterministic storage isolation | AST asserts no `self` reference in leader/validator closures | Live receipt must contain no storage-capture warning |
+| Constructor validation | Empty market ID/question, malformed JSON, empty sources, duplicate URLs, oversized specs, naive/unordered deadlines | Redeployment pending |
+| URL safety | HTTP, localhost, private IPv4, internal suffixes, IPv6 loopback, IPv4-mapped loopback, multicast, malformed hostnames | Redeployment pending |
+| Deadline enforcement | Trigger and outcome reject early resolution | Historical deployments exercised ordered stages |
+| Stage ordering | Outcome cannot resolve while the trigger is open | Historical deployments exercised trigger then outcome |
+| Positive two-stage route | Trigger `TRUE`, outcome `FALSE`, final `SETTLED / NO` | Historical manifests record `SETTLED / YES` |
+| False trigger | Stores terminal `VOID` outcome | Not separately exercised live |
+| Unavailable evidence | HTTP 503 and request exception both produce retryable `TRIGGER_UNRESOLVED` | Redeployment pending |
+| Retry behavior | An unresolved trigger can later become `TRIGGER_CONFIRMED` | Not separately exercised live |
+| Replay/idempotency | Repeating terminal trigger resolution preserves state and attempt count | Historical stages finalized once each |
+| Malicious leader | Validator rejects altered trigger and outcome decisions | Historical manifests record validator agreement |
+| Validator coverage | AST test requires every returned consensus field to be compared with zero tolerance | Historical receipts report no storage warning |
+| Storage isolation | AST test rejects `self` capture in leader/validator closures | Historical receipts report no storage warning |
 
-The direct tests are intentionally small and deterministic. StudioNet and
-Bradbury deployment manifests record the live contract address, deployment
-transaction, schema/state verification, and consensus transaction where
-applicable. A live `UNRESOLVED` or `INCONCLUSIVE` result is a passing safety
-test when the public evidence does not support a terminal judgment.
+## Current local result — 2026-09-03
 
-## Recorded results — 2026-08-12
+- `genvm-lint check`: passed against `GENVM_VERSION=v0.3.0-rc7` with three AST
+  checks and SDK schema validation.
+- Standalone direct suite: 26 passed.
+- Runner: pinned `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`.
 
-- Standalone suite: 3 passed.
-- Six-contract aggregate suite: 28 passed, 1 environment-only skip.
-- GenVM lint and SDK schema validation: passed.
-- StudioNet: finalized deployment and both finalized stages; final state
-  `SETTLED / YES`, each stage `SUCCESS`, 3 agree / 2 idle, no storage warning.
-- Bradbury: deployment submitted in the six-contract batch and accepted; see
-  `deployments/bradbury.json` for the current finality status.
+## Evidence status
+
+The existing StudioNet and Bradbury receipts were produced by source commit
+`8efa41d419ca5422c174a37d65efc2a15b1aaf47`, before the 2026-09-03 URL and
+request-failure hardening. New deployments and ordered consensus transactions
+are required before those manifests can be presented as evidence for the
+current source.

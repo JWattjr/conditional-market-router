@@ -1,5 +1,7 @@
 {
   "contract": "ConditionalMarketRouter",
+  "source_commit": "8efa41d419ca5422c174a37d65efc2a15b1aaf47",
+  "historical_pre_hardening_deployment": true,
   "network": "studionet",
   "chain_id": 61999,
   "deployer": "0xdB433ff614bDD1ecE21Aa97221C3e0a7ecf79c92",

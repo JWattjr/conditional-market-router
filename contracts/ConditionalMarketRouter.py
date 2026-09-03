@@ -3,6 +3,7 @@
 """ConditionalMarketRouter: a two-stage trigger/outcome market primitive."""
 
 from datetime import datetime, timezone
+from ipaddress import ip_address
 import json
 
 from genlayer import *
@@ -10,6 +11,19 @@ from genlayer import *
 
 MAX_SOURCES = 8
 MAX_SOURCE_CHARS = 6000
+MAX_SPEC_CHARS = 4000
+
+
+def _is_public_unicast(address) -> bool:
+    return (
+        address.is_global
+        and not address.is_multicast
+        and not address.is_unspecified
+        and not address.is_reserved
+        and not address.is_loopback
+        and not address.is_link_local
+        and not address.is_private
+    )
 
 
 def _parse_json(value, label: str):
@@ -38,7 +52,10 @@ def _as_object(value, label: str) -> dict:
 
 def _parse_time(value: str) -> datetime:
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise ValueError("timezone offset is required")
+        return parsed.astimezone(timezone.utc)
     except Exception as exc:
         raise gl.vm.UserError(f"[EXPECTED] Invalid ISO-8601 deadline: {exc}")
 
@@ -61,7 +78,11 @@ def _validate_url(url: str) -> None:
         if closing < 0 or host[closing + 1:] not in ("", ":443"):
             raise gl.vm.UserError("[EXPECTED] source URL is invalid")
         literal = host[1:closing]
-        if literal in ("::", "::1") or literal.startswith(("fc", "fd", "fe8", "fe9", "fea", "feb")):
+        try:
+            parsed_ip = ip_address(literal)
+        except ValueError:
+            raise gl.vm.UserError("[EXPECTED] source URL has an invalid IP address")
+        if parsed_ip.version != 6 or "%" in literal or not _is_public_unicast(parsed_ip):
             raise gl.vm.UserError("[EXPECTED] source URL must be publicly reachable")
         return
     if ":" in host:
@@ -72,13 +93,24 @@ def _validate_url(url: str) -> None:
         raise gl.vm.UserError("[EXPECTED] source URL must be publicly reachable")
     labels = host.split(".")
     if all(label.isdigit() for label in labels):
-        if len(labels) != 4 or any(int(label) > 255 for label in labels):
+        try:
+            parsed_ip = ip_address(host)
+        except ValueError:
             raise gl.vm.UserError("[EXPECTED] source URL has an invalid IP address")
-        octets = [int(label) for label in labels]
-        if octets[0] in (0, 10, 127) or octets[0] >= 224 or (octets[0] == 169 and octets[1] == 254) or (octets[0] == 172 and 16 <= octets[1] <= 31) or (octets[0] == 192 and octets[1] == 168):
+        if not _is_public_unicast(parsed_ip):
             raise gl.vm.UserError("[EXPECTED] source URL must be publicly reachable")
-    elif len(labels) < 2 or any(len(label) == 0 for label in labels):
-        raise gl.vm.UserError("[EXPECTED] source URL must contain a public hostname")
+    else:
+        if len(host) > 253 or len(labels) < 2:
+            raise gl.vm.UserError("[EXPECTED] source URL must contain a public hostname")
+        for label in labels:
+            if (
+                len(label) == 0
+                or len(label) > 63
+                or label.startswith("-")
+                or label.endswith("-")
+                or not all(char.isascii() and (char.isalnum() or char == "-") for char in label)
+            ):
+                raise gl.vm.UserError("[EXPECTED] source URL has an invalid hostname")
 
 
 def _normalize_decision(value: str) -> str:
@@ -124,19 +156,25 @@ class ConditionalMarketRouter(gl.Contract):
             raise gl.vm.UserError("[EXPECTED] trigger and outcome specs must be objects")
         _validate_spec(trigger_spec, "trigger")
         _validate_spec(outcome_spec, "outcome")
+        trigger_spec_canonical = json.dumps(trigger_spec, sort_keys=True, separators=(",", ":"))
+        outcome_spec_canonical = json.dumps(outcome_spec, sort_keys=True, separators=(",", ":"))
+        if len(trigger_spec_canonical) > MAX_SPEC_CHARS or len(outcome_spec_canonical) > MAX_SPEC_CHARS:
+            raise gl.vm.UserError("[EXPECTED] trigger and outcome specs must not exceed 4000 characters")
         for label, sources in (("trigger", trigger_sources), ("outcome", outcome_sources)):
             if not isinstance(sources, list) or len(sources) == 0 or len(sources) > MAX_SOURCES:
                 raise gl.vm.UserError(f"[EXPECTED] {label} sources must contain 1-8 URLs")
             for url in sources:
                 _validate_url(url)
+            if len(set(sources)) != len(sources):
+                raise gl.vm.UserError(f"[EXPECTED] {label} source URLs must be unique")
         trigger_deadline = _parse_time(trigger_deadline_iso)
         outcome_deadline = _parse_time(outcome_deadline_iso)
         if trigger_deadline <= _now() or outcome_deadline <= trigger_deadline:
             raise gl.vm.UserError("[EXPECTED] deadlines must be future and ordered")
 
         self.market_id = market_id.strip()
-        self.trigger_spec_json = json.dumps(trigger_spec, sort_keys=True, separators=(",", ":"))
-        self.outcome_spec_json = json.dumps(outcome_spec, sort_keys=True, separators=(",", ":"))
+        self.trigger_spec_json = trigger_spec_canonical
+        self.outcome_spec_json = outcome_spec_canonical
         self.trigger_sources_json = json.dumps(trigger_sources, sort_keys=True, separators=(",", ":"))
         self.outcome_sources_json = json.dumps(outcome_sources, sort_keys=True, separators=(",", ":"))
         self.trigger_deadline_iso = trigger_deadline.isoformat()
@@ -160,11 +198,15 @@ class ConditionalMarketRouter(gl.Contract):
             evidence = []
             available_count = 0
             for index, url in enumerate(urls):
-                response = gl.nondet.web.get(url)
-                available = response.status == 200
+                try:
+                    response = gl.nondet.web.get(url)
+                    available = response.status == 200
+                    content = response.body[:MAX_SOURCE_CHARS].decode("utf-8", errors="replace") if available else "[SOURCE_UNAVAILABLE]"
+                except Exception:
+                    available = False
+                    content = "[SOURCE_UNAVAILABLE]"
                 if available:
                     available_count += 1
-                content = response.body[:MAX_SOURCE_CHARS].decode("utf-8", errors="replace") if available else "[SOURCE_UNAVAILABLE]"
                 evidence.append({"id": str(index), "url": url, "available": available, "content": content})
             if available_count == 0:
                 return {"stage": stage, "decision": "UNRESOLVED"}

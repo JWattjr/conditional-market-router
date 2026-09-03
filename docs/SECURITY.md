@@ -1,39 +1,48 @@
 # Threat model and security notes
 
+## Trust boundary
+
+The contract is the authoritative router for two consensus decisions. It does
+not custody funds or execute payouts. Anyone may call the resolution methods
+after their respective deadlines; the frozen evidence and validator agreement,
+not caller identity, determine the result.
+
 ## Threats addressed
 
-- **Malicious leader:** validators independently fetch evidence and recompute
-  decision fields; a well-formed but false leader output is rejected.
-- **Prompt injection:** fetched pages are delimited as untrusted evidence and
-  the prompts instruct models to ignore embedded commands.
-- **Source drift:** only bounded extracts and canonical statuses are returned;
-  raw HTML is never stored as the authoritative result.
-- **Source outage:** unavailable pages produce `UNRESOLVED`, `UNAVAILABLE`, or
-  `NEEDS_CLARIFICATION`; they never silently settle a market.
-- **Conflicting evidence:** SourceConflictKernel records `CONTESTED`, and the
-  other resolvers use `INCONCLUSIVE` where a decision cannot be justified.
-- **Replay/double resolution:** terminal states return their current state or
-  reject further writes; attempts are recorded for auditability.
-- **Premature resolution:** each resolver checks a deterministic transaction
-  timestamp against its frozen deadline.
-- **Unbounded inputs:** constructor fields, criteria, rule counts, source counts,
-  URL lengths, and fetched content lengths are capped.
-- **Credential leakage:** HTTPS URLs containing userinfo are rejected.
+- **Malicious leader:** validators independently fetch the same frozen evidence,
+  rerun the evaluation, and compare both `stage` and `decision` exactly.
+- **Source outage:** non-200 responses and request exceptions are marked
+  unavailable. An all-source outage returns `UNRESOLVED` without invoking an
+  LLM, leaving the stage retryable.
+- **Direct private-address input:** URLs require public HTTPS hosts. Non-public
+  IPv4 and IPv6 literals, IPv4-mapped private addresses, multicast addresses,
+  local/internal suffixes, userinfo, malformed hostnames, and non-default ports
+  are rejected.
+- **Prompt injection:** source text is labeled as evidence, bounded before it
+  enters the prompt, and accompanied by an instruction to ignore embedded
+  commands. Validators independently repeat the task.
+- **Premature or out-of-order resolution:** explicit UTC-normalized deadlines
+  and lifecycle gates control each transition.
+- **Replay:** terminal calls return current state without another consensus run
+  or attempt increment.
+- **Unbounded inputs:** market IDs, questions, canonical specs, source counts,
+  URL lengths, and per-source response bodies are capped.
 
-## Deliberate non-goals
+## Residual risks
 
-- This repository does not claim that an external webpage is authentic merely
-  because it is reachable.
-- It does not provide legal arbitration or guarantee market solvency.
-- It does not send irreversible payouts; a payment wrapper should invoke a
-  resolver only after the network's finality window and use idempotent claims.
-- It does not allow market rules to be edited after deployment.
+- DNS names can resolve differently or rebind after constructor validation.
+  Production deployments should use an explicit reviewed-domain allowlist.
+- HTTPS proves transport security, not that a source is authoritative or true.
+- Public evidence and LLM judgments can drift between validators, causing
+  disagreement or a retryable unresolved state.
+- `UNRESOLVED` stages have no expiry and may be retried indefinitely. A payout
+  adapter should define its own maximum-wait and refund policy.
+- Prompt-injection resistance is defense in depth, not a formal guarantee.
+- Trigger and outcome are separate consensus transactions. Integrators must
+  wait for finality after both consequential transitions.
 
 ## Operational requirements
 
-Use public, stable, source-specific URLs. Prefer immutable reports, official
-records, or signed attestations. Before production use, add allowlists for
-domains and a finality-aware payout adapter.
-
-The dated audit, remediated findings, and residual-risk register are in
-`docs/SECURITY_AUDIT.md`.
+Use stable, source-specific URLs from reviewed domains. Prefer immutable
+reports, official records, or signed attestations. A payout wrapper must consume
+only finalized terminal state and make its claims idempotent.
