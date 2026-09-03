@@ -51,11 +51,15 @@ The current direct suite contains 26 tests. See `docs/TEST_MATRIX.md` and
 
 ## Deployment evidence
 
-The checked-in StudioNet and Bradbury manifests describe the pre-hardening
-source at commit `8efa41d419ca5422c174a37d65efc2a15b1aaf47`. They remain useful
-historical consensus evidence, but the hardened source must be redeployed and
-the manifests updated before portal submission.
+- [Current StudioNet deployment](https://explorer-studio.genlayer.com/address/0xE0731eBA9d51B84782a51F47Bb403a05672325F9)
+  executes public source commit `cefc42751267706b506afab65e4d6bfadca0eb9e`.
+  Deployment, trigger, and outcome all finalized with successful execution;
+  the final state is `SETTLED / YES` with two attempts.
+- `deployments/studionet.json` records the current transaction hashes, exact
+  constructor arguments, validator results, and final state.
+- `deployments/bradbury.json` remains explicitly marked as historical
+  pre-hardening evidence and is not presented as a deployment of current code.
 
-After committing the exact source to deploy, an operator can run
+After committing the exact source to deploy, an operator can reproduce this with
 `python scripts/studionet_smoke.py` with `GENLAYER_PRIVATE_KEY` set. The script
 waits for finalized execution and writes a source-linked StudioNet manifest.

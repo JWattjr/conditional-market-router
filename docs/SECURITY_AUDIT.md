@@ -11,8 +11,8 @@ state-machine tests, and review of historical hosted-network receipts.
 
 No unresolved critical or high-severity issue was found in the reviewed source.
 The router records a two-stage judgment and contains no funds or payout code.
-The current source still requires fresh hosted-network deployment evidence
-before portal submission.
+The reviewed source has fresh StudioNet deployment and two-stage consensus
+evidence linked to public commit `cefc42751267706b506afab65e4d6bfadca0eb9e`.
 
 ## Remediated findings
 
@@ -36,14 +36,16 @@ before portal submission.
 - Validator tests bind every returned consensus field and reject altered
   decisions.
 - Outage tests cover both HTTP failure responses and thrown request failures.
-- Historical StudioNet and Bradbury receipts finalized both stages with
-  validator agreement and no storage-capture warning.
+- Current StudioNet deployment, trigger, and outcome finalized with successful
+  execution. Both stages reached `MAJORITY_AGREE` with 3 agree / 2 idle and no
+  storage-capture warning; final state is `SETTLED / YES`.
 
 ## Historical deployment limitation
 
-The checked-in hosted-network manifests reference source commit
-`8efa41d419ca5422c174a37d65efc2a15b1aaf47`. They predate the current hardening
-changes and must not be represented as deployments of the reviewed source.
+The Bradbury manifest references source commit
+`8efa41d419ca5422c174a37d65efc2a15b1aaf47`. It predates the current hardening
+changes and is retained only as historical evidence. The StudioNet manifest is
+current.
 
 This is an engineering assessment, not formal verification or a financial or
 legal guarantee.

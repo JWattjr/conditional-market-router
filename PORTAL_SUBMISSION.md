@@ -24,16 +24,14 @@ no funds and is intended to compose with a finality-aware payout wrapper.
 The repository includes a pinned GenVM runner/toolchain, 26 direct tests, a
 router-specific security audit and test matrix, and deployment manifests.
 
-## Required before submission
+## Verification status
 
-1. Make `https://github.com/JWattjr/conditional-market-router` publicly
-   accessible and confirm every file link below works while signed out.
-2. Commit and push the hardened source, tests, and documentation.
-3. Redeploy the hardened commit and execute both ordered consensus stages on a
-   hosted GenLayer network.
-4. Replace the deployment placeholders below and update the manifests with the
-   new source commit, addresses, transaction hashes, finality, and validator
-   results.
+- Repository is public and the reviewed source is on `main`.
+- Hardened source commit: `cefc42751267706b506afab65e4d6bfadca0eb9e`.
+- StudioNet deployment, trigger, and outcome finalized with successful
+  execution.
+- Both stages reached `MAJORITY_AGREE` with 3 agree / 2 idle.
+- Final state: trigger `TRUE`, status `SETTLED`, outcome `YES`, attempts 2.
 
 ## Evidence links
 
@@ -43,9 +41,8 @@ router-specific security audit and test matrix, and deployment manifests.
 4. Validator-coverage tests — https://github.com/JWattjr/conditional-market-router/blob/main/tests/test_validator_coverage.py
 5. Security audit — https://github.com/JWattjr/conditional-market-router/blob/main/docs/SECURITY_AUDIT.md
 6. Test matrix — https://github.com/JWattjr/conditional-market-router/blob/main/docs/TEST_MATRIX.md
-7. Hosted-network manifest — REPLACE_WITH_CURRENT_MANIFEST_URL
-8. GenLayer Explorer contract — REPLACE_WITH_CURRENT_EXPLORER_URL
+7. StudioNet manifest — https://github.com/JWattjr/conditional-market-router/blob/main/deployments/studionet.json
+8. GenLayer Explorer contract — https://explorer-studio.genlayer.com/address/0xE0731eBA9d51B84782a51F47Bb403a05672325F9
 
-The existing `deployments/studionet.json` and `deployments/bradbury.json` files
-are explicitly marked as historical pre-hardening evidence and are not evidence
-for the current source.
+The Bradbury manifest is explicitly marked as historical pre-hardening evidence
+and is not presented as a deployment of the current source.
