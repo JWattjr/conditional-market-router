@@ -68,7 +68,7 @@ def _wait_until(deadline: datetime) -> None:
 
 def _git_commit() -> str:
     return subprocess.run(
-        ["git", "rev-parse", "HEAD"],
+        ["git", "-c", f"safe.directory={ROOT.as_posix()}", "rev-parse", "HEAD"],
         cwd=ROOT,
         check=True,
         capture_output=True,
